@@ -19,9 +19,30 @@ const Auth = () => {
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [userMode, setUserMode] = useState<"attendee" | "organizer">("attendee");
 
   useEffect(() => {
-    if (user) navigate("/dashboard/events", { replace: true });
+    const checkRoleAndRedirect = async () => {
+      if (!user) return;
+      
+      const savedMode = localStorage.getItem("userMode");
+      if (savedMode === "organizer") {
+        navigate("/dashboard/events", { replace: true });
+      } else if (savedMode === "attendee") {
+        navigate("/attendee/home", { replace: true });
+      } else {
+        // Fallback checks
+        const { data } = await supabase.from('events').select('id').eq('user_id', user.id).limit(1);
+        if (data && data.length > 0) {
+          localStorage.setItem("userMode", "organizer");
+          navigate("/dashboard/events", { replace: true });
+        } else {
+          localStorage.setItem("userMode", "attendee");
+          navigate("/attendee/home", { replace: true });
+        }
+      }
+    };
+    checkRoleAndRedirect();
   }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -35,8 +56,8 @@ const Auth = () => {
     if (error) {
       toast.error(error.message);
     } else {
+      localStorage.setItem("userMode", userMode);
       toast.success("Welcome back!");
-      navigate("/dashboard/events");
     }
   };
 
@@ -55,8 +76,13 @@ const Auth = () => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Account created! Check your email to confirm, or you may be logged in automatically.");
-      navigate("/dashboard/events");
+      localStorage.setItem("userMode", userMode);
+      toast.success("Account created! Welcome to EventSpark.");
+      if (userMode === "organizer") {
+        navigate("/dashboard/events");
+      } else {
+        navigate("/attendee/home");
+      }
     }
   };
 
@@ -100,6 +126,28 @@ const Auth = () => {
               </TabsTrigger>
             </TabsList>
 
+            <div className="mb-6">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2 block">I want to...</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  type="button" 
+                  variant={userMode === "attendee" ? "default" : "outline"} 
+                  className={userMode === "attendee" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}
+                  onClick={() => setUserMode("attendee")}
+                >
+                  Attend Events
+                </Button>
+                <Button 
+                  type="button" 
+                  variant={userMode === "organizer" ? "default" : "outline"}
+                  className={userMode === "organizer" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}
+                  onClick={() => setUserMode("organizer")}
+                >
+                  Host Events
+                </Button>
+              </div>
+            </div>
+
             <TabsContent value="login" className="mt-0">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1.5">
@@ -140,10 +188,11 @@ const Auth = () => {
                 variant="outline"
                 className="w-full mt-5 rounded-full h-11 border-input hover:bg-muted font-medium"
                 onClick={async () => {
+                  localStorage.setItem("userMode", userMode);
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                      redirectTo: window.location.origin
+                      redirectTo: `${window.location.origin}/auth`
                     }
                   });
                   if (error) toast.error(error.message || "Google sign-in failed");
@@ -210,10 +259,11 @@ const Auth = () => {
                 variant="outline"
                 className="w-full mt-5 rounded-full h-11 border-input hover:bg-muted font-medium"
                 onClick={async () => {
+                  localStorage.setItem("userMode", userMode);
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                      redirectTo: window.location.origin
+                      redirectTo: `${window.location.origin}/auth`
                     }
                   });
                   if (error) toast.error(error.message || "Google sign-in failed");

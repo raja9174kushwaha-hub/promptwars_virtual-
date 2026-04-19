@@ -250,13 +250,24 @@ const Attendees = () => {
             return (
               <div className="space-y-4">
                 <div className="space-y-3">
-                  {Object.entries(data).map(([key, value]) => (
-                    <div key={key} className="flex flex-col gap-0.5">
-                      <span className="text-xs text-muted-foreground font-medium">{key}</span>
-                      <span className="text-sm">{typeof value === "string" ? value : JSON.stringify(value)}</span>
-                    </div>
-                  ))}
+                  {Object.entries(data).map(([key, value]) => {
+                    if (key === "payment_receipt") return null;
+                    return (
+                      <div key={key} className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground font-medium">{key}</span>
+                        <span className="text-sm">{typeof value === "string" ? value : JSON.stringify(value)}</span>
+                      </div>
+                    );
+                  })}
                 </div>
+                {data.payment_receipt && typeof data.payment_receipt === "string" && (
+                  <div className="pt-3 border-t border-border space-y-2">
+                    <span className="text-xs text-muted-foreground font-medium block">Payment Receipt</span>
+                    <a href={data.payment_receipt} target="_blank" rel="noopener noreferrer" className="block max-w-[200px] border border-border rounded-lg overflow-hidden cursor-zoom-in">
+                      <img src={data.payment_receipt} alt="Payment Receipt" className="w-full object-contain" />
+                    </a>
+                  </div>
+                )}
                 <div className="border-t border-border pt-3 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground font-medium">Event</span>

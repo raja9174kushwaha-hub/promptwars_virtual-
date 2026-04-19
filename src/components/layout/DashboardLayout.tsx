@@ -13,12 +13,18 @@ import {
   Settings,
   LogOut,
   Eye,
+  Armchair,
+  ShieldCheck,
+  Map as MapIcon,
 } from "lucide-react";
 
 const navItems = [
   { title: "Events", url: "/dashboard/events", icon: CalendarDays },
+  { title: "Seating", url: "/dashboard/seating", icon: Armchair },
   { title: "Attendees", url: "/dashboard/attendees", icon: Users },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
+  { title: "Security IoT", url: "/dashboard/security", icon: ShieldCheck },
+  { title: "Crowd Map", url: "/dashboard/venue-map", icon: MapIcon },
   { title: "Integrations", url: "/dashboard/integrations", icon: Puzzle },
   { title: "Settings", url: "/dashboard/settings", icon: Settings },
 ];

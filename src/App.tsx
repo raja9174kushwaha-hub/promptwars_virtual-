@@ -21,6 +21,9 @@ import Attendees from "./pages/dashboard/Attendees";
 import Analytics from "./pages/dashboard/Analytics";
 import Integrations from "./pages/dashboard/Integrations";
 import SettingsPage from "./pages/dashboard/SettingsPage";
+import SeatingArrangement from "./pages/dashboard/SeatingArrangement";
+import SecurityIoT from "./pages/dashboard/SecurityIoT";
+import VenueMapAdmin from "./pages/dashboard/VenueMapAdmin";
 import VenueLive from "./pages/dashboard/VenueLive";
 import VenueLivePublic from "./pages/VenueLivePublic";
 import EntryPass from "./pages/EntryPass";
@@ -29,6 +32,7 @@ import AttendeeHome from "./pages/attendee/AttendeeHome";
 import MyEvents from "./pages/attendee/MyEvents";
 import AttendeeTicket from "./pages/attendee/AttendeeTicket";
 import ExploreEvents from "./pages/attendee/ExploreEvents";
+import VenueMap from "./pages/attendee/VenueMap";
 
 const queryClient = new QueryClient();
 
@@ -62,7 +66,7 @@ const App = () => (
               {/* Dashboard (protected) */}
               <Route path="/dashboard" element={<Navigate to="/dashboard/events" replace />} />
               <Route path="/dashboard/*" element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredMode="organizer">
                   <DashboardLayout>
                     <Routes>
                       <Route path="events" element={<Events />} />
@@ -74,6 +78,9 @@ const App = () => (
                       <Route path="analytics" element={<Analytics />} />
                       <Route path="integrations" element={<Integrations />} />
                       <Route path="settings" element={<SettingsPage />} />
+                      <Route path="seating" element={<SeatingArrangement />} />
+                      <Route path="security" element={<SecurityIoT />} />
+                      <Route path="venue-map" element={<VenueMapAdmin />} />
                     </Routes>
                   </DashboardLayout>
                 </ProtectedRoute>
@@ -82,13 +89,14 @@ const App = () => (
               {/* Attendee Portal (protected) */}
               <Route path="/attendee" element={<Navigate to="/attendee/home" replace />} />
               <Route path="/attendee/*" element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredMode="attendee">
                   <AttendeeLayout>
                     <Routes>
                       <Route path="home" element={<AttendeeHome />} />
                       <Route path="my-events" element={<MyEvents />} />
                       <Route path="ticket/:eventId" element={<AttendeeTicket />} />
                       <Route path="explore" element={<ExploreEvents />} />
+                      <Route path="map" element={<VenueMap />} />
                     </Routes>
                   </AttendeeLayout>
                 </ProtectedRoute>

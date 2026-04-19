@@ -102,6 +102,8 @@ const CreateEvent = () => {
   const [initialized, setInitialized] = useState(false);
   const [flyerUrl, setFlyerUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [uploadingQr, setUploadingQr] = useState(false);
   const [colorMode, setColorMode] = useState<"light" | "dark">("light");
   const [showSuccess, setShowSuccess] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string | null>(null);
@@ -153,6 +155,7 @@ const CreateEvent = () => {
       }
 
       setFlyerUrl(existingEvent.background_image_url || null);
+      setQrUrl(existingEvent.logo_url || null);
       setInitialized(true);
     }
   }, [isEditMode, existingEvent, initialized]);
@@ -184,6 +187,25 @@ const CreateEvent = () => {
       toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingQr(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `qrcodes/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("event-assets").upload(path, file);
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("event-assets").getPublicUrl(path);
+      setQrUrl(urlData.publicUrl);
+      toast.success("Payment QR uploaded!");
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploadingQr(false);
     }
   };
 
@@ -244,7 +266,9 @@ const CreateEvent = () => {
         requires_approval: requiresApproval,
         capacity: capacity ? parseInt(capacity) : undefined,
         background_image_url: flyerUrl || undefined,
+        logo_url: qrUrl || undefined,
         color_mode: colorMode,
+        status: "live",
       } as any;
 
       if (isEditMode && editId) {
@@ -611,9 +635,34 @@ const CreateEvent = () => {
                     <Switch checked={isPaid} onCheckedChange={setIsPaid} />
                   </div>
                   {isPaid && (
-                    <div className="space-y-2">
-                      <Label className="text-sm text-muted-foreground">Ticket Price ($)</Label>
-                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={ticketPrice} onChange={e => setTicketPrice(e.target.value)} />
+                    <div className="space-y-4 bg-muted/20 p-4 border border-border rounded-lg mt-3">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Ticket Price ($)</Label>
+                        <Input type="number" min="0" step="0.01" placeholder="0.00" value={ticketPrice} onChange={e => setTicketPrice(e.target.value)} />
+                      </div>
+                      <div className="space-y-2 pt-3 border-t border-border mt-3">
+                        <Label className="text-sm font-semibold block">Payment QR Code (Optional)</Label>
+                        <p className="text-xs text-muted-foreground mb-2">Upload your UPI, Venmo, or Bank QR. Attendees will scan this and upload a receipt to register.</p>
+                        {qrUrl ? (
+                          <div className="relative inline-block mt-2">
+                            <img src={qrUrl} alt="QR Code" className="w-32 h-32 rounded-lg border border-border object-contain bg-white p-1" />
+                            <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full" onClick={() => setQrUrl(null)}>
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <label className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-border bg-background cursor-pointer hover:bg-muted/50 transition-colors w-full">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              {uploadingQr ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4 text-primary" />}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">Upload Scan Code</p>
+                              <p className="text-xs text-muted-foreground">PNG, JPG</p>
+                            </div>
+                            <input type="file" accept="image/*" className="hidden" onChange={handleQrUpload} disabled={uploadingQr} />
+                          </label>
+                        )}
+                      </div>
                     </div>
                   )}
 

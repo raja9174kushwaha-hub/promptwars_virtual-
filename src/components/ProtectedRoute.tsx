@@ -1,7 +1,13 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+export function ProtectedRoute({ 
+  children, 
+  requiredMode 
+}: { 
+  children: React.ReactNode;
+  requiredMode?: "organizer" | "attendee";
+}) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -14,6 +20,12 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  const savedMode = localStorage.getItem("userMode");
+  if (requiredMode && savedMode && requiredMode !== savedMode) {
+    if (savedMode === "organizer") return <Navigate to="/dashboard/events" replace />;
+    if (savedMode === "attendee") return <Navigate to="/attendee/home" replace />;
   }
 
   return <>{children}</>;

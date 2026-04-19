@@ -65,30 +65,56 @@ export default function ExploreEvents() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08 }}
-                className="bg-card border border-border rounded-2xl overflow-hidden hover:shadow-lg transition-shadow group"
+                className="bg-card border border-border mt-4 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col"
               >
-                {/* Color accent bar */}
-                <div
-                  className="h-2 w-full"
-                  style={{ backgroundColor: event.primary_color ?? "#7C3AED" }}
-                />
-                <div className="p-5">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <h3 className="font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
-                      {event.name}
-                    </h3>
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${EVENT_TYPE_COLORS[event.event_type ?? ""] ?? "bg-muted text-muted-foreground"}`}>
-                      {event.event_type ?? "event"}
+                {/* Image Cover */}
+                <div className="relative h-48 w-full bg-muted overflow-hidden">
+                  {event.background_image_url ? (
+                    <img 
+                      src={event.background_image_url} 
+                      alt={event.name} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div 
+                      className="w-full h-full opacity-80"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${event.primary_color ?? "#7C3AED"}44, ${event.primary_color ?? "#7C3AED"}99)` 
+                      }} 
+                    />
+                  )}
+                  {/* Overlay Gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                  
+                  {/* Top Badges */}
+                  <div className="absolute top-4 right-4">
+                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider backdrop-blur-md border border-white/20 shadow-sm ${
+                      isUpcoming ? "bg-white/90 text-black" : "bg-black/60 text-white"
+                    }`}>
+                      {isUpcoming ? (event.ticket_price ? `$${event.ticket_price}` : "Free") : "Ended"}
                     </span>
                   </div>
 
+                  {/* Type Badge */}
+                  <div className="absolute bottom-4 left-4">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full bg-black/40 text-white backdrop-blur-md border border-white/10`}>
+                      {event.event_type ?? "Event"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-6 flex flex-col flex-1">
+                  <h3 className="font-bold text-lg text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                    {event.name}
+                  </h3>
+
                   {event.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                    <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
                       {event.description}
                     </p>
                   )}
 
-                  <div className="space-y-1.5 mb-4">
+                  <div className="space-y-2 mt-5 mb-6">
                     {event.event_date && (
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Clock className="w-3.5 h-3.5" />
@@ -103,21 +129,23 @@ export default function ExploreEvents() {
                     )}
                   </div>
 
-                  <Button
-                    size="sm"
-                    className="w-full rounded-full"
-                    variant={isUpcoming ? "default" : "outline"}
-                    disabled={!isUpcoming}
-                    asChild={isUpcoming}
-                  >
-                    {isUpcoming ? (
-                      <Link to={`/register/${event.slug}`}>
-                        Register Now <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                      </Link>
-                    ) : (
-                      <span>Event Ended</span>
-                    )}
-                  </Button>
+                  <div className="mt-auto">
+                    <Button
+                      size="sm"
+                      className="w-full rounded-full h-11 font-semibold group-hover:bg-primary/90 transition-colors"
+                      variant={isUpcoming ? "default" : "outline"}
+                      disabled={!isUpcoming}
+                      asChild={isUpcoming}
+                    >
+                      {isUpcoming ? (
+                        <Link to={`/register/${event.slug}`}>
+                          Get Tickets <ArrowRight className="w-4 h-4 ml-1.5 transition-transform group-hover:translate-x-1" />
+                        </Link>
+                      ) : (
+                        <span>Event Ended</span>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             );

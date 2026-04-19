@@ -74,7 +74,7 @@ export default function AttendeeHome() {
           <div className="space-y-3">
             {upcomingRegistrations.slice(0, 3).map((reg) => (
               <div key={reg.id} className="flex items-center gap-4 bg-card border border-border rounded-2xl p-4 hover:shadow-sm transition-shadow">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: reg.events?.primary_color + "22" ?? "#7C3AED22" }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: (reg.events?.primary_color ?? "#7C3AED") + "22" }}>
                   <CalendarDays className="w-5 h-5" style={{ color: reg.events?.primary_color ?? "#7C3AED" }} />
                 </div>
                 <div className="flex-1 min-w-0">

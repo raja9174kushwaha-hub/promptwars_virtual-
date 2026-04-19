@@ -116,8 +116,23 @@ export default function AttendeeTicket() {
               <p className="text-lg font-mono font-bold text-foreground mt-1">{ticketCode}</p>
             </div>
 
+            {/* SEAT INFO SECTION */}
+            <div className="w-full bg-primary/5 border border-primary/20 rounded-2xl p-5 flex items-center justify-between text-left shadow-sm">
+              <div>
+                <p className="text-[10px] text-primary font-bold uppercase tracking-wider mb-0.5">Assigned Seat</p>
+                <h3 className="text-3xl font-display font-black text-primary leading-none">B-12</h3>
+                <p className="text-xs text-muted-foreground mt-1 font-medium">Sector A • Row B</p>
+              </div>
+              <Link to="/attendee/map">
+                <div className="w-14 h-14 bg-card rounded-xl border-2 border-primary/20 flex flex-col items-center justify-center cursor-pointer transition-colors hover:bg-primary/10 hover:border-primary/40 group relative overflow-hidden">
+                   <MapPin className="w-5 h-5 text-primary mb-0.5 group-hover:-translate-y-1 transition-transform" />
+                   <span className="text-[8px] font-bold text-primary tracking-wider uppercase">Map</span>
+                </div>
+              </Link>
+            </div>
+
             {/* Attendee Info */}
-            <div className="w-full rounded-xl bg-muted/50 p-4">
+            <div className="w-full rounded-xl bg-muted/50 p-4 text-left">
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Registered As</p>
               <p className="font-semibold text-foreground text-sm">{(data.data as any)?.name || user?.user_metadata?.full_name || "Attendee"}</p>
               <p className="text-sm text-muted-foreground">{(data.data as any)?.email || user?.email}</p>

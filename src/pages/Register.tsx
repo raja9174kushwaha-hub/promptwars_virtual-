@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useParams } from "react-router-dom";
-import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap } from "lucide-react";
+import { CalendarDays, MapPin, Video, Globe, Loader2, CheckCircle2, Zap, Upload, X } from "lucide-react";
 import { useEventBySlug, Event } from "@/hooks/useEvents";
 import { useFormFields } from "@/hooks/useFormFields";
 import { useCreateRegistration } from "@/hooks/useRegistrations";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Tables } from "@/integrations/supabase/types";
 
@@ -111,55 +112,122 @@ const EventInfo = ({ event, className = "" }: { event: Event; className?: string
 };
 
 const RegistrationForm = ({
+  event,
   formFields,
   formData,
   onFieldChange,
   consent,
   onConsentChange,
+  paymentUrl,
+  setPaymentUrl,
   onSubmit,
   isPending,
   brandColor,
   className = "",
 }: {
+  event: Event;
   formFields: FormField[] | undefined;
   formData: Record<string, string>;
   onFieldChange: (label: string, value: string) => void;
   consent: boolean;
   onConsentChange: (v: boolean) => void;
+  paymentUrl: string | null;
+  setPaymentUrl: (v: string | null) => void;
   onSubmit: (e: React.FormEvent) => void;
   isPending: boolean;
   brandColor: string;
   className?: string;
-}) => (
-  <form onSubmit={onSubmit} className={`space-y-4 ${className}`}>
-    {formFields?.map((field) => (
-      <div key={field.id} className="space-y-2">
-        <Label>{field.label}{field.required && " *"}</Label>
-        <Input
-          type={field.field_type === "email" ? "email" : field.field_type === "tel" ? "tel" : "text"}
-          placeholder={field.placeholder || field.label}
-          required={field.required}
-          value={formData[field.label] || ""}
-          onChange={e => onFieldChange(field.label, e.target.value)}
-        />
+}) => {
+  const [uploading, setUploading] = useState(false);
+  const isPaid = event.ticket_price && Number(event.ticket_price) > 0;
+  const qrUrl = (event as any).logo_url;
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `receipts/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("event-assets").upload(path, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from("event-assets").getPublicUrl(path);
+      setPaymentUrl(data.publicUrl);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload screenshot");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={onSubmit} className={`space-y-4 ${className}`}>
+      {formFields?.map((field) => (
+        <div key={field.id} className="space-y-2">
+          <Label>{field.label}{field.required && " *"}</Label>
+          <Input
+            type={field.field_type === "email" ? "email" : field.field_type === "tel" ? "tel" : "text"}
+            placeholder={field.placeholder || field.label}
+            required={field.required}
+            value={formData[field.label] || ""}
+            onChange={e => onFieldChange(field.label, e.target.value)}
+          />
+        </div>
+      ))}
+
+      {isPaid && qrUrl && (
+        <div className="bg-muted/30 border border-border rounded-lg p-4 mt-4 space-y-4">
+          <div>
+            <h4 className="font-semibold text-sm">Payment Required</h4>
+            <p className="text-xs text-muted-foreground mt-0.5">Ticket Price: <span className="font-bold text-foreground">${event.ticket_price}</span></p>
+          </div>
+          
+          <div className="flex justify-center bg-white p-2 rounded-lg border border-border w-40 mx-auto">
+            <img src={qrUrl} alt="Payment QR Code" className="w-full h-full object-contain" />
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold block">Upload Payment Screenshot *</Label>
+            {paymentUrl ? (
+              <div className="relative inline-block w-full">
+                <img src={paymentUrl} alt="Receipt" className="w-full h-32 rounded-lg border border-border object-cover" />
+                <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 rounded-full" onClick={() => setPaymentUrl(null)}>
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            ) : (
+              <label className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-border bg-background cursor-pointer hover:bg-muted/50 transition-colors w-full">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <Upload className="w-4 h-4 text-primary" />}
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold">Upload Receipt</p>
+                  <p className="text-[10px] text-muted-foreground">Required to complete registration</p>
+                </div>
+                <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+              </label>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-start gap-2 pt-2">
+        <Checkbox id="gdpr" checked={consent} onCheckedChange={(c) => onConsentChange(!!c)} />
+        <Label htmlFor="gdpr" className="text-xs text-muted-foreground leading-relaxed">
+          I agree to receive communications about this event and consent to the processing of my data in accordance with the Privacy Policy.
+        </Label>
       </div>
-    ))}
-    <div className="flex items-start gap-2 pt-2">
-      <Checkbox id="gdpr" checked={consent} onCheckedChange={(c) => onConsentChange(!!c)} />
-      <Label htmlFor="gdpr" className="text-xs text-muted-foreground leading-relaxed">
-        I agree to receive communications about this event and consent to the processing of my data in accordance with the Privacy Policy.
-      </Label>
-    </div>
-    <Button
-      type="submit"
-      className="w-full h-11 text-base border-0 text-white"
-      style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}
-      disabled={isPending}
-    >
-      {isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Registering…</> : "Register Now"}
-    </Button>
-  </form>
-);
+      <Button
+        type="submit"
+        className="w-full h-11 text-base border-0 text-white"
+        style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)` }}
+        disabled={isPending || (!!isPaid && !!qrUrl && !paymentUrl)}
+      >
+        {isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Registering…</> : "Register Now"}
+      </Button>
+    </form>
+  );
+};
 
 const FlyerImage = ({ flyerUrl, eventName, className = "" }: { flyerUrl: string | null; eventName: string; className?: string }) => (
   flyerUrl ? (
@@ -181,10 +249,12 @@ const Register = () => {
   const { slug } = useParams();
   const { data: event, isLoading: eventLoading } = useEventBySlug(slug);
   const { data: formFields, isLoading: fieldsLoading } = useFormFields(event?.id);
+  const { user } = useAuth();
   const createReg = useCreateRegistration();
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [consent, setConsent] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
 
   const handleFieldChange = useCallback((label: string, value: string) => {
     setFormData(prev => ({ ...prev, [label]: value }));
@@ -223,7 +293,16 @@ const Register = () => {
       return;
     }
     try {
-      await createReg.mutateAsync({ event_id: event.id, data: formData });
+      // Ensure data is never an empty object ({}) to satisfy database constraints
+      const submissionData = Object.keys(formData).length === 0 
+        ? { email: user?.email || "attendee@event.com" } 
+        : { ...formData };
+      
+      if (paymentUrl) {
+        submissionData["payment_receipt"] = paymentUrl;
+      }
+
+      await createReg.mutateAsync({ event_id: event.id, data: submissionData });
       setSubmitted(true);
     } catch (err: any) {
       toast.error(err.message || "Registration failed");
@@ -236,11 +315,14 @@ const Register = () => {
   const isDark = (event as any).color_mode === "dark";
 
   const formProps = {
+    event,
     formFields,
     formData,
     onFieldChange: handleFieldChange,
     consent,
     onConsentChange: setConsent,
+    paymentUrl,
+    setPaymentUrl,
     onSubmit: handleSubmit,
     isPending: createReg.isPending,
     brandColor,

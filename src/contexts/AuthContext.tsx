@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    localStorage.removeItem("userMode");
     await supabase.auth.signOut();
     setSession(null);
   };
