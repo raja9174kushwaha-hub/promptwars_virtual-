@@ -8,6 +8,7 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AttendeeLayout } from "@/pages/attendee/AttendeeLayout";
 
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
@@ -24,6 +25,10 @@ import VenueLive from "./pages/dashboard/VenueLive";
 import VenueLivePublic from "./pages/VenueLivePublic";
 import EntryPass from "./pages/EntryPass";
 import NotFound from "./pages/NotFound";
+import AttendeeHome from "./pages/attendee/AttendeeHome";
+import MyEvents from "./pages/attendee/MyEvents";
+import AttendeeTicket from "./pages/attendee/AttendeeTicket";
+import ExploreEvents from "./pages/attendee/ExploreEvents";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +76,21 @@ const App = () => (
                       <Route path="settings" element={<SettingsPage />} />
                     </Routes>
                   </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              {/* Attendee Portal (protected) */}
+              <Route path="/attendee" element={<Navigate to="/attendee/home" replace />} />
+              <Route path="/attendee/*" element={
+                <ProtectedRoute>
+                  <AttendeeLayout>
+                    <Routes>
+                      <Route path="home" element={<AttendeeHome />} />
+                      <Route path="my-events" element={<MyEvents />} />
+                      <Route path="ticket/:eventId" element={<AttendeeTicket />} />
+                      <Route path="explore" element={<ExploreEvents />} />
+                    </Routes>
+                  </AttendeeLayout>
                 </ProtectedRoute>
               } />
 
